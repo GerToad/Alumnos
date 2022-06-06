@@ -3,31 +3,36 @@ package alumnos;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class Interfaz extends JFrame implements ActionListener{
     private Label title;
-    private Button alumnos, editar, borrar, cerrar;
+    private Button alumnos, editar, borrar, cerrar, actualizar;
     private JTable tab;
-    private JScrollPane sp;
+    String[][] data = new String[30][7];
+    String[] columnNames = {"Lista", "Nombre", "Apellido", "D1", "D2", "D3", "Promedio" };
+    Conectar con = new Conectar();
+    Connection cn = con.conexion();
+
 
     public Interfaz() {
+
         title = new Label("Bienvenido");
         title.setBounds(250,30,150,30);
         title.setFont(new Font("Consolas", 1, 13));
         add(title);
 
-        // Table
-        String[][] data = {
-            { "Kundan Kumar Jha", "4031", "CSE", "Kundan Kumar Jha", "4031", "CSE" },
-            { "Anand Jha", "6014", "IT", "Kundan Kumar Jha", "4031", "CSE" }
-        };
-        String[] names = { "Nombre", "Apellido", "D1", "D2", "D3", "Promedio" };
-        tab = new JTable(data, names);
+        tabla();
+        tab = new JTable(data, columnNames);
         tab.setBounds(55, 120, 490, 300);
-        add(tab);
 
-        //sp = new JScrollPane(tab);
-        //add(sp);
+        JScrollPane sp = new JScrollPane(tab);
+        add(sp);
+
 
 	    // Buttons
 	    alumnos = new Button("Registar alumno");
@@ -45,6 +50,11 @@ public class Interfaz extends JFrame implements ActionListener{
 	    add(borrar);
 	    borrar.addActionListener(this);
 
+	    actualizar = new Button("Actualizar");
+	    actualizar.setBounds(395, 70, 150, 30);
+	    add(actualizar);
+	    actualizar.addActionListener(this);
+
 	    cerrar = new Button("Cerrar");
 	    cerrar.setBounds(250, 510, 100, 30);
 	    add(cerrar);
@@ -52,9 +62,55 @@ public class Interfaz extends JFrame implements ActionListener{
 
 	    // General settings
 	    setTitle("Alumnos");
-	    setLayout(null);
+	    setLayout(new FlowLayout());
 	    setSize(600, 600);
-	    setVisible(true);
+        setVisible(true);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setResizable(false);
+        setLocationRelativeTo(null);
+    }
+
+    public int getRows(){
+        String sql = "SELECT * FROM alumno";
+        Statement st;
+        int rows = 0;
+        try{
+
+            st = cn.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while(rs.next()){
+                rows = rs.getRow();
+            }
+
+        }catch(SQLException row){
+            System.err.println("Error");
+        }
+
+        return rows;
+    }
+
+    public void tabla(){
+        // Table
+        String sql = "SELECT * FROM alumno";
+        Statement st;
+
+        try{
+
+            st = cn.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+
+            while(rs.next()){
+                int row = rs.getRow();
+
+                for(int i=0; i<7; i++){
+                    data[row-1][i] = rs.getString(i+1);
+                }
+
+            }
+
+        }catch(SQLException e){
+            System.err.println("Error");
+        }
 
     }
 
@@ -62,24 +118,45 @@ public class Interfaz extends JFrame implements ActionListener{
         if(e.getSource() == cerrar){
             System.exit(0);
         }
+        if(e.getSource() == actualizar){
+            System.out.println("Actualizando");
+            tabla();
+            tab.repaint();
+        }
         if(e.getSource() == alumnos){
-            System.out.println("Studenten");
-            String title = "Registar alumno";
+            String title = "Registro";
             Registros app = new Registros(title);
-            app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            app.setResizable(false);
-            app.setLocationRelativeTo(null);
         }
         if(e.getSource() == editar){
-            System.out.println("Edit");
             String title = "Editar alumno";
+            int row = tab.getSelectedRow();
+            Object id = tab.getValueAt(row, 0);
             Registros app = new Registros(title);
-            app.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            app.setResizable(false);
-            app.setLocationRelativeTo(null);
+            app.setId(id);
+            app.fillOut();
+            //System.out.println(app.id);
         }
         if(e.getSource() == borrar){
-            System.out.println("Delete");
+            int row = tab.getSelectedRow();
+            Object id = tab.getValueAt(row, 0);
+            String borrar = "DELETE FROM alumno WHERE NumeroLista = "+id;
+            try{
+                PreparedStatement ps = cn.prepareStatement(borrar);
+                int response = ps.executeUpdate();
+
+                if(response > 0){
+                    JOptionPane.showMessageDialog(null, "Alumno borrado");
+                    for(int i=0; i<9; i++){
+                        for (int j = 0; j < 7; j++) {
+                            data[i][j] = null;
+                        }
+                    }
+                    tabla();
+                    tab.repaint();
+                }
+            }catch(Exception error){
+                System.out.println(error);
+            }
         }
 
     }
