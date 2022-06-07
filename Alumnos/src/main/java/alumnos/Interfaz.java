@@ -82,25 +82,6 @@ public class Interfaz extends JFrame implements ActionListener{
         setLocationRelativeTo(null);
     }
 
-    public int getRows(){
-        String sql = "SELECT * FROM alumno";
-        Statement st;
-        int rows = 0;
-        try{
-
-            st = cn.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while(rs.next()){
-                rows = rs.getRow();
-            }
-
-        }catch(SQLException row){
-            System.err.println("Error");
-        }
-
-        return rows;
-    }
-
     public void tabla(){
         // Table
         String sql = "SELECT * FROM alumno";
