@@ -9,9 +9,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+
 public class Interfaz extends JFrame implements ActionListener{
     private Label title;
-    private Button alumnos, editar, borrar, cerrar, actualizar;
+    private Button alumnos, editar, borrar, cerrar, actualizar, reporte;
     private JTable tab;
     String[][] data = new String[30][7];
     String[] columnNames = {"Lista", "Nombre", "Apellido", "D1", "D2", "D3", "Promedio" };
@@ -54,6 +61,11 @@ public class Interfaz extends JFrame implements ActionListener{
 	    actualizar.setBounds(395, 70, 150, 30);
 	    add(actualizar);
 	    actualizar.addActionListener(this);
+
+	    reporte = new Button("Reporte PDF");
+	    reporte.setBounds(395, 70, 150, 30);
+	    add(reporte);
+	    reporte.addActionListener(this);
 
 	    cerrar = new Button("Cerrar");
 	    cerrar.setBounds(250, 510, 100, 30);
@@ -156,6 +168,53 @@ public class Interfaz extends JFrame implements ActionListener{
                 }
             }catch(Exception error){
                 System.out.println(error);
+            }
+        }
+        if(e.getSource() == reporte){
+            Document doc = new Document();
+
+            try{
+                String route = System.getProperty("user.home");
+                //System.out.println(route);
+                PdfWriter.getInstance(doc, new FileOutputStream(route + "/Documents/Lista.pdf"));
+                doc.open();
+
+                PdfPTable tabla = new PdfPTable(7);
+                tabla.addCell("# lista");
+                tabla.addCell("Nombre");
+                tabla.addCell("Apellido");
+                tabla.addCell("1er Parcial");
+                tabla.addCell("2do Parcial");
+                tabla.addCell("3er Parcial");
+                tabla.addCell("Promedio");
+
+                String sql = "SELECT * FROM alumno";
+
+                try{
+
+                    PreparedStatement ps = cn.prepareStatement(sql);
+                    ResultSet rs = ps.executeQuery();
+
+                    if(rs.next()){
+                        do{
+                            tabla.addCell(rs.getString(1));
+                            tabla.addCell(rs.getString(2));
+                            tabla.addCell(rs.getString(3));
+                            tabla.addCell(rs.getString(4));
+                            tabla.addCell(rs.getString(5));
+                            tabla.addCell(rs.getString(6));
+                            tabla.addCell(rs.getString(7));
+                        }while(rs.next());
+                        doc.add(tabla);
+                    }
+                }catch(DocumentException | SQLException docs){
+                    System.out.println(docs);
+                }
+                doc.close();
+                JOptionPane.showMessageDialog(null, "Reporte creado");
+
+            }catch(DocumentException | HeadlessException | FileNotFoundException pdf){
+                System.out.println(pdf);
             }
         }
 
